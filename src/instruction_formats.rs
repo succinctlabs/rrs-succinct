@@ -19,6 +19,10 @@ pub const OPCODE_BRANCH: u32 = 0x63;
 pub const OPCODE_JALR: u32 = 0x67;
 pub const OPCODE_JAL: u32 = 0x6f;
 pub const OPCODE_SYSTEM: u32 = 0x73;
+pub const OPCODE_CUSTOM0: u32 = 0x0b;
+
+pub const OPCODE_128: u32 = 0x7f;
+pub const VIRT_OFFSET: u32 = 100;
 
 #[derive(Debug, PartialEq)]
 pub struct RType {
@@ -37,6 +41,16 @@ impl RType {
             rs1: ((insn >> 15) & 0x1f) as usize,
             funct3: (insn >> 12) & 0x7,
             rd: ((insn >> 7) & 0x1f) as usize,
+        }
+    }
+
+    pub fn new_128(insn: &[u32]) -> RType {
+        RType {
+            funct7: (insn[0] >> 25) & 0x7f,
+            rs2: insn[3] as usize,
+            rs1: insn[2] as usize,
+            funct3: (insn[0] >> 22) & 0x7,
+            rd: insn[1] as usize,
         }
     }
 }
@@ -66,6 +80,15 @@ impl IType {
             rd: ((insn >> 7) & 0x1f) as usize,
         }
     }
+
+    pub fn new_128(insn: &[u32]) -> IType {
+        IType {
+            imm: insn[3] as i32,
+            rs1: insn[2] as usize,
+            funct3: (insn[0] >> 14) & 0x7,
+            rd: insn[1] as usize,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -90,6 +113,19 @@ impl ITypeShamt {
             rd: itype.rd,
         }
     }
+
+    pub fn new_128(insn: &[u32]) -> ITypeShamt {
+        let itype = IType::new_128(insn);
+        let shamt = (itype.imm as u32) & 0x1f;
+
+        ITypeShamt {
+            funct7: (insn[3] >> 25) & 0x7f,
+            shamt,
+            rs1: itype.rs1,
+            funct3: itype.funct3,
+            rd: itype.rd,
+        }
+    }
 }
 
 pub struct ITypeCSR {
@@ -108,6 +144,17 @@ impl ITypeCSR {
             rs1: ((insn >> 15) & 0x1f) as usize,
             funct3: (insn >> 12) & 0x7,
             rd: ((insn >> 7) & 0x1f) as usize,
+        }
+    }
+
+    pub fn new_128(insn: &[u32]) -> ITypeCSR {
+        let csr: u32 = insn[3] & 0xfff;
+
+        ITypeCSR {
+            csr,
+            rs1: insn[2] as usize,
+            funct3: (insn[0] >> 14) & 0x7,
+            rd: insn[1] as usize,
         }
     }
 }
@@ -135,6 +182,15 @@ impl SType {
             rs2: ((insn >> 20) & 0x1f) as usize,
             rs1: ((insn >> 15) & 0x1f) as usize,
             funct3: (insn >> 12) & 0x7,
+        }
+    }
+
+    pub fn new_128(insn: &[u32]) -> SType {
+        SType {
+            imm: insn[3] as i32,
+            rs2: insn[2] as usize,
+            rs1: insn[1] as usize,
+            funct3: (insn[0] >> 14) & 0x7,
         }
     }
 }
@@ -165,6 +221,23 @@ impl BType {
             funct3: (insn >> 12) & 0x7,
         }
     }
+
+    pub fn new_128(insn: &[u32]) -> BType {
+        let uimm: i32 = ((insn[3] & 0x1fffffff) << 1) as i32;
+
+        let imm: i32 = if (insn[3] & 0x20000000) != 0 {
+            uimm - (1 << 30)
+        } else {
+            uimm
+        };
+
+        BType {
+            imm,
+            rs2: insn[2] as usize,
+            rs1: insn[1] as usize,
+            funct3: (insn[0] >> 14) & 0x7,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -178,6 +251,13 @@ impl UType {
         UType {
             imm: (insn & 0xffff_f000) as i32,
             rd: ((insn >> 7) & 0x1f) as usize,
+        }
+    }
+
+    pub fn new_128(insn: &[u32]) -> UType {
+        UType {
+            imm: (insn[3] & 0xffff_f000) as i32,
+            rd: insn[1] as usize,
         }
     }
 }
@@ -202,6 +282,21 @@ impl JType {
         JType {
             imm,
             rd: ((insn >> 7) & 0x1f) as usize,
+        }
+    }
+
+    pub fn new_128(insn: &[u32]) -> JType {
+        let uimm: i32 = ((insn[3] & 0x1fffffff) << 1) as i32;
+
+        let imm: i32 = if (insn[3] & 0x20000000) != 0 {
+            uimm - (1 << 30)
+        } else {
+            uimm
+        };
+
+        JType {
+            imm,
+            rd: insn[1] as usize,
         }
     }
 }
