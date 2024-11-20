@@ -58,6 +58,59 @@ fn process_opcode_op<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_op_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::RType::new_128(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_add128(dec_insn)),
+            0b000_0001 => Some(processor.process_mul128(dec_insn)),
+            0b010_0000 => Some(processor.process_sub128(dec_insn)),
+            _ => None,
+        },
+        0b001 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_sll128(dec_insn)),
+            0b000_0001 => Some(processor.process_mulh128(dec_insn)),
+            _ => None,
+        },
+        0b010 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_slt128(dec_insn)),
+            0b000_0001 => Some(processor.process_mulhsu128(dec_insn)),
+            _ => None,
+        },
+        0b011 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_sltu128(dec_insn)),
+            0b000_0001 => Some(processor.process_mulhu128(dec_insn)),
+            _ => None,
+        },
+        0b100 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_xor128(dec_insn)),
+            0b000_0001 => Some(processor.process_div128(dec_insn)),
+            _ => None,
+        },
+        0b101 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_srl128(dec_insn)),
+            0b000_0001 => Some(processor.process_divu128(dec_insn)),
+            0b010_0000 => Some(processor.process_sra128(dec_insn)),
+            _ => None,
+        },
+        0b110 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_or128(dec_insn)),
+            0b000_0001 => Some(processor.process_rem128(dec_insn)),
+            _ => None,
+        },
+        0b111 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_and128(dec_insn)),
+            0b000_0001 => Some(processor.process_remu128(dec_insn)),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 fn process_opcode_op_imm<T: InstructionProcessor>(
     processor: &mut T,
     insn_bits: u32,
@@ -84,6 +137,47 @@ fn process_opcode_op_imm<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_op_imm_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::IType::new_128(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => Some(processor.process_addi128(dec_insn)),
+        0b001 => Some(processor.process_slli128(instruction_formats::ITypeShamt::new_128(insn_bits))),
+        0b010 => Some(processor.process_slti128(dec_insn)),
+        0b011 => Some(processor.process_sltui128(dec_insn)),
+        0b100 => Some(processor.process_xori128(dec_insn)),
+        0b101 => {
+            let dec_insn_shamt = instruction_formats::ITypeShamt::new_128(insn_bits);
+            match dec_insn_shamt.funct7 {
+                0b000_0000 => Some(processor.process_srli128(dec_insn_shamt)),
+                0b010_0000 => Some(processor.process_srai128(dec_insn_shamt)),
+                _ => None,
+            }
+        }
+        0b110 => Some(processor.process_ori128(dec_insn)),
+        0b111 => Some(processor.process_andi128(dec_insn)),
+        _ => None,
+    }
+}
+
+fn process_opcode_custom<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::IType {
+        imm: insn_bits[3] as i32,
+        rs1: insn_bits[2] as usize,
+        funct3: (insn_bits[0] >> 14) & 0x7,
+        rd: insn_bits[1] as usize };
+    match dec_insn.funct3 {
+    0b001 => Some(processor.process_stackaddr(dec_insn)),
+    _ => None,
+    }
+}
+
 fn process_opcode_branch<T: InstructionProcessor>(
     processor: &mut T,
     insn_bits: u32,
@@ -97,6 +191,23 @@ fn process_opcode_branch<T: InstructionProcessor>(
         0b101 => Some(processor.process_bge(dec_insn)),
         0b110 => Some(processor.process_bltu(dec_insn)),
         0b111 => Some(processor.process_bgeu(dec_insn)),
+        _ => None,
+    }
+}
+
+fn process_opcode_branch_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::BType::new_128(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => Some(processor.process_beq128(dec_insn)),
+        0b001 => Some(processor.process_bne128(dec_insn)),
+        0b100 => Some(processor.process_blt128(dec_insn)),
+        0b101 => Some(processor.process_bge128(dec_insn)),
+        0b110 => Some(processor.process_bltu128(dec_insn)),
+        0b111 => Some(processor.process_bgeu128(dec_insn)),
         _ => None,
     }
 }
@@ -117,6 +228,22 @@ fn process_opcode_load<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_load_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::IType::new_128(insn_bits);
+
+    match dec_insn.funct3 {
+        0b0000 => Some(processor.process_lb128(dec_insn)),
+        0b0001 => Some(processor.process_lh128(dec_insn)),
+        0b0010 => Some(processor.process_lw128(dec_insn)),
+        0b0100 => Some(processor.process_lbu128(dec_insn)),
+        0b0101 => Some(processor.process_lhu128(dec_insn)),
+        _ => None,
+    }
+}
+
 fn process_opcode_store<T: InstructionProcessor>(
     processor: &mut T,
     insn_bits: u32,
@@ -131,11 +258,55 @@ fn process_opcode_store<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_store_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::SType::new_128(insn_bits);
+
+    match dec_insn.funct3 {
+        0b0000 => Some(processor.process_sb128(dec_insn)),
+        0b0001 => Some(processor.process_sh128(dec_insn)),
+        0b0010 => Some(processor.process_sw128(dec_insn)),
+        _ => None,
+    }
+}
+
 fn process_opcode_system<T: InstructionProcessor>(
     processor: &mut T,
     insn_bits: u32,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::ITypeCSR::new(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => {
+            if dec_insn.rd != 0 || dec_insn.rs1 != 0 {
+                None
+            } else {
+                match dec_insn.csr {
+                    0b000000000000 => Some(processor.process_ecall()),
+                    0b000000000001 => Some(processor.process_ebreak()),
+                    0b000100000101 => Some(processor.process_wfi()),
+                    0b001100000010 => Some(processor.process_mret()),
+                    _ => None,
+                }
+            }
+        }
+        0b001 => Some(processor.process_csrrw(dec_insn)),
+        0b010 => Some(processor.process_csrrs(dec_insn)),
+        0b011 => Some(processor.process_csrrc(dec_insn)),
+        0b101 => Some(processor.process_csrrwi(dec_insn)),
+        0b110 => Some(processor.process_csrrsi(dec_insn)),
+        0b111 => Some(processor.process_csrrci(dec_insn)),
+        _ => None,
+    }
+}
+
+fn process_opcode_system_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::ITypeCSR::new_128(insn_bits);
 
     match dec_insn.funct3 {
         0b000 => {
@@ -197,6 +368,49 @@ pub fn process_instruction<T: InstructionProcessor>(
             }
         }
         instruction_formats::OPCODE_SYSTEM => process_opcode_system(processor, insn_bits),
+        _ => None,
+    }
+}
+
+pub fn process_instruction_128<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: &[u32],
+) -> Option<T::InstructionResult> {
+    let opcode: u32 = (insn_bits[0] >> 7) & 0x7f;
+    
+
+    match opcode {
+        instruction_formats::OPCODE_OP => process_opcode_op_128(processor, insn_bits),
+        instruction_formats::OPCODE_OP_IMM => process_opcode_op_imm_128(processor, insn_bits),
+        instruction_formats::OPCODE_LUI => {
+            Some(processor.process_lui128(instruction_formats::UType::new_128(insn_bits)))
+        }
+        instruction_formats::OPCODE_AUIPC => {
+            Some(processor.process_auipc128(instruction_formats::UType::new_128(insn_bits)))
+        }
+        instruction_formats::OPCODE_BRANCH => process_opcode_branch_128(processor, insn_bits),
+        instruction_formats::OPCODE_LOAD => process_opcode_load_128(processor, insn_bits),
+        instruction_formats::OPCODE_STORE => process_opcode_store_128(processor, insn_bits),
+        instruction_formats::OPCODE_JAL => {
+            Some(processor.process_jal128(instruction_formats::JType::new_128(insn_bits)))
+        }
+        instruction_formats::OPCODE_JALR => {
+            let dec_insn = instruction_formats::JALFPType::new_128(insn_bits);
+            match dec_insn.funct3 {
+                0b001 => Some(processor.process_jalrr128(dec_insn)),
+                0b010 => Some(processor.process_jalri128(dec_insn)),
+                _ => None
+            }
+        }
+        instruction_formats::OPCODE_SYSTEM => process_opcode_system_128(processor, insn_bits),
+        instruction_formats::OPCODE_CUSTOM0 => process_opcode_custom(processor, insn_bits),
+        instruction_formats::OPCODE_MISC_MEM => {
+            let dec_insn = instruction_formats::IType::new_128(insn_bits);
+            match dec_insn.funct3 {
+                0b000 => Some(processor.process_fence(dec_insn)),
+                _ => None,
+            }
+        }
         _ => None,
     }
 }
