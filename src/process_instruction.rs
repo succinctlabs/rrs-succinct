@@ -161,6 +161,52 @@ fn process_opcode_system<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_op_32<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: u32,
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::RType::new(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_addw(dec_insn)),
+            0b010_0000 => Some(processor.process_subw(dec_insn)),
+            _ => None,
+        },
+        0b001 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_sllw(dec_insn)),
+            _ => None,
+        },
+        0b101 => match dec_insn.funct7 {
+            0b000_0000 => Some(processor.process_srlw(dec_insn)),
+            0b010_0000 => Some(processor.process_sraw(dec_insn)),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn process_opcode_op_imm_32<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: u32,
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::IType::new(insn_bits);
+
+    match dec_insn.funct3 {
+        0b000 => Some(processor.process_addiw(dec_insn)),
+        0b001 => Some(processor.process_slliw(instruction_formats::ITypeShamt::new(insn_bits))),
+        0b101 => {
+            let dec_insn_shamt = instruction_formats::ITypeShamt::new(insn_bits);
+            match dec_insn_shamt.funct7 {
+                0b000_0000 => Some(processor.process_srliw(dec_insn_shamt)),
+                0b010_0000 => Some(processor.process_sraiw(dec_insn_shamt)),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
 /// Decodes instruction in `insn_bits` calling the appropriate function in `processor` returning
 /// the result it produces.
 ///
@@ -193,10 +239,18 @@ pub fn process_instruction<T: InstructionProcessor>(
             let dec_insn = instruction_formats::IType::new(insn_bits);
             match dec_insn.funct3 {
                 0b000 => Some(processor.process_fence(dec_insn)),
-                _ => None,
+                _ => {
+                    println!("Unrecognized funct3: {:x}", dec_insn.funct3);
+                    None
+                }
             }
         }
         instruction_formats::OPCODE_SYSTEM => process_opcode_system(processor, insn_bits),
-        _ => None,
+        instruction_formats::OPCODE_OP_32 => process_opcode_op_32(processor, insn_bits),
+        instruction_formats::OPCODE_OP_IMM_32 => process_opcode_op_imm_32(processor, insn_bits),
+        _ => {
+            println!("Unrecognized opcode: {:x}", opcode);
+            None
+        }
     }
 }
