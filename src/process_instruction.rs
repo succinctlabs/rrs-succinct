@@ -78,18 +78,12 @@ fn process_opcode_op_imm<T: InstructionProcessor>(
                 // RV64I
                 0b000_0001 => Some(processor.process_srli(dec_insn_shamt)),
                 0b010_0001 => Some(processor.process_srai(dec_insn_shamt)),
-                _ => {
-                    println!("Unknown funct7: {:03b}", dec_insn_shamt.funct7);
-                    None
-                }
+                _ => None,
             }
         }
         0b110 => Some(processor.process_ori(dec_insn)),
         0b111 => Some(processor.process_andi(dec_insn)),
-        _ => {
-            println!("Unknown funct3: {:03b}", dec_insn.funct3);
-            None
-        }
+        _ => None,
     }
 }
 
@@ -125,10 +119,7 @@ fn process_opcode_load<T: InstructionProcessor>(
         // RV64I
         0b110 => Some(processor.process_lwu(dec_insn)),
         0b011 => Some(processor.process_ld(dec_insn)),
-        _ => {
-            println!("Unknown funct3: {:03b}", dec_insn.funct3);
-            None
-        }
+        _ => None,
     }
 }
 
@@ -193,16 +184,10 @@ fn process_opcode_op_imm_32<T: InstructionProcessor>(
             match dec_insn_shamt.funct7 {
                 0b000_0000 => Some(processor.process_srliw(dec_insn_shamt)),
                 0b010_0000 => Some(processor.process_sraiw(dec_insn_shamt)),
-                _ => {
-                    println!("Unknown funct7: {:03b}", dec_insn_shamt.funct7);
-                    None
-                }
+                _ => None,
             }
         }
-        _ => {
-            println!("Unknown funct3: {:03b}", dec_insn.funct3);
-            None
-        }
+        _ => None,
     }
 }
 
@@ -219,10 +204,7 @@ fn process_opcode_op_32<T: InstructionProcessor>(
             0b010_0000 => Some(processor.process_subw(dec_insn)),
             // RV64M
             0b000_0001 => Some(processor.process_mulw(dec_insn)),
-            _ => {
-                println!("Unknown funct7: {:03b}", dec_insn.funct7);
-                None
-            }
+            _ => None,
         },
         0b001 => Some(processor.process_sllw(dec_insn)),
         0b100 => Some(processor.process_divw(dec_insn)),
@@ -231,18 +213,12 @@ fn process_opcode_op_32<T: InstructionProcessor>(
             0b010_0000 => Some(processor.process_sraw(dec_insn)),
             // RV64M
             0b000_0001 => Some(processor.process_divuw(dec_insn)),
-            _ => {
-                println!("Unknown funct7: {:03b}", dec_insn.funct7);
-                None
-            }
+            _ => None,
         },
         // RV64M
         0b110 => Some(processor.process_remw(dec_insn)),
         0b111 => Some(processor.process_remuw(dec_insn)),
-        _ => {
-            println!("Unknown funct3: {:03b}", dec_insn.funct3);
-            None
-        }
+        _ => None,
     }
 }
 
@@ -278,18 +254,12 @@ pub fn process_instruction<T: InstructionProcessor>(
             let dec_insn = instruction_formats::IType::new(insn_bits);
             match dec_insn.funct3 {
                 0b000 => Some(processor.process_fence(dec_insn)),
-                _ => {
-                    println!("Unrecognized funct3: {:03b}", dec_insn.funct3);
-                    None
-                }
+                _ => None,
             }
         }
         instruction_formats::OPCODE_SYSTEM => process_opcode_system(processor, insn_bits),
         instruction_formats::OPCODE_OP_IMM_32 => process_opcode_op_imm_32(processor, insn_bits),
         instruction_formats::OPCODE_OP_32 => process_opcode_op_32(processor, insn_bits),
-        _ => {
-            println!("Unrecognized opcode: {:x}", opcode);
-            None
-        }
+        _ => None,
     }
 }
