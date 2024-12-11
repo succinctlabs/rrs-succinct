@@ -199,14 +199,22 @@ fn process_opcode_op_32<T: InstructionProcessor>(
         0b000 => match dec_insn.funct7 {
             0b000_0000 => Some(processor.process_addw(dec_insn)),
             0b010_0000 => Some(processor.process_subw(dec_insn)),
+            // RV64M
+            0b000_0001 => Some(processor.process_mulw(dec_insn)),
             _ => None,
         },
         0b001 => Some(processor.process_sllw(dec_insn)),
+        0b100 => Some(processor.process_divw(dec_insn)),
         0b101 => match dec_insn.funct7 {
             0b000_0000 => Some(processor.process_srlw(dec_insn)),
             0b010_0000 => Some(processor.process_sraw(dec_insn)),
+            // RV64M
+            0b000_0001 => Some(processor.process_divuw(dec_insn)),
             _ => None,
         },
+        // RV64M
+        0b110 => Some(processor.process_remw(dec_insn)),
+        0b111 => Some(processor.process_remuw(dec_insn)),
         _ => None,
     }
 }
