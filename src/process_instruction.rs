@@ -113,6 +113,9 @@ fn process_opcode_load<T: InstructionProcessor>(
         0b010 => Some(processor.process_lw(dec_insn)),
         0b100 => Some(processor.process_lbu(dec_insn)),
         0b101 => Some(processor.process_lhu(dec_insn)),
+        // RV64I
+        0b110 => Some(processor.process_lwu(dec_insn)),
+        0b111 => Some(processor.process_ld(dec_insn)),
         _ => None,
     }
 }
@@ -127,6 +130,8 @@ fn process_opcode_store<T: InstructionProcessor>(
         0b000 => Some(processor.process_sb(dec_insn)),
         0b001 => Some(processor.process_sh(dec_insn)),
         0b010 => Some(processor.process_sw(dec_insn)),
+        // RV64I
+        0b011 => Some(processor.process_sd(dec_insn)),
         _ => None,
     }
 }
@@ -168,6 +173,7 @@ fn process_opcode_op_imm_32<T: InstructionProcessor>(
     let dec_insn = instruction_formats::IType::new(insn_bits);
 
     match dec_insn.funct3 {
+        // RV64I
         0b000 => Some(processor.process_addiw(dec_insn)),
         0b001 => Some(processor.process_slliw(instruction_formats::ITypeShamt::new(insn_bits))),
         0b101 => {
@@ -189,6 +195,7 @@ fn process_opcode_op_32<T: InstructionProcessor>(
     let dec_insn = instruction_formats::RType::new(insn_bits);
 
     match dec_insn.funct3 {
+        // RV64I
         0b000 => match dec_insn.funct7 {
             0b000_0000 => Some(processor.process_addw(dec_insn)),
             0b010_0000 => Some(processor.process_subw(dec_insn)),
