@@ -19,8 +19,8 @@ pub const OPCODE_BRANCH: u32 = 0x63;
 pub const OPCODE_JALR: u32 = 0x67;
 pub const OPCODE_JAL: u32 = 0x6f;
 pub const OPCODE_SYSTEM: u32 = 0x73;
-pub const OPCODE_OP_32: u32 = 0x3b; // 32-bit arithmetic operations for RV64
-pub const OPCODE_OP_IMM_32: u32 = 0x1b; // 32-bit immediate arithmetic operations for RV64
+pub const OPCODE_OP_IMM_32: u32 = 0x1b;
+pub const OPCODE_OP_32: u32 = 0x3b;
 
 #[derive(Debug, PartialEq)]
 pub struct RType {
