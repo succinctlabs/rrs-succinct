@@ -32,12 +32,12 @@ pub struct RType {
 }
 
 impl RType {
-    pub fn new(insn: u32) -> RType {
+    pub fn new(insn: u64) -> RType {
         RType {
-            funct7: (insn >> 25) & 0x7f,
+            funct7: ((insn as u32) >> 25) & 0x7f,
             rs2: ((insn >> 20) & 0x1f) as usize,
             rs1: ((insn >> 15) & 0x1f) as usize,
-            funct3: (insn >> 12) & 0x7,
+            funct3: ((insn as u32) >> 12) & 0x7,
             rd: ((insn >> 7) & 0x1f) as usize,
         }
     }
@@ -52,7 +52,7 @@ pub struct IType {
 }
 
 impl IType {
-    pub fn new(insn: u32) -> IType {
+    pub fn new(insn: u64) -> IType {
         let uimm: i32 = ((insn >> 20) & 0x7ff) as i32;
 
         let imm: i32 = if (insn & 0x8000_0000) != 0 {
@@ -64,7 +64,7 @@ impl IType {
         IType {
             imm,
             rs1: ((insn >> 15) & 0x1f) as usize,
-            funct3: (insn >> 12) & 0x7,
+            funct3: ((insn as u32) >> 12) & 0x7,
             rd: ((insn >> 7) & 0x1f) as usize,
         }
     }
@@ -80,12 +80,12 @@ pub struct ITypeShamt {
 }
 
 impl ITypeShamt {
-    pub fn new(insn: u32) -> ITypeShamt {
+    pub fn new(insn: u64) -> ITypeShamt {
         let itype = IType::new(insn);
         let shamt = (itype.imm as u32) & 0x1f;
 
         ITypeShamt {
-            funct7: (insn >> 25) & 0x7f,
+            funct7: ((insn as u32) >> 25) & 0x7f,
             shamt,
             rs1: itype.rs1,
             funct3: itype.funct3,
@@ -102,13 +102,13 @@ pub struct ITypeCSR {
 }
 
 impl ITypeCSR {
-    pub fn new(insn: u32) -> ITypeCSR {
-        let csr: u32 = (insn >> 20) & 0xfff;
+    pub fn new(insn: u64) -> ITypeCSR {
+        let csr: u32 = ((insn as u32) >> 20) & 0xfff;
 
         ITypeCSR {
             csr,
             rs1: ((insn >> 15) & 0x1f) as usize,
-            funct3: (insn >> 12) & 0x7,
+            funct3: ((insn as u32) >> 12) & 0x7,
             rd: ((insn >> 7) & 0x1f) as usize,
         }
     }
@@ -123,7 +123,7 @@ pub struct SType {
 }
 
 impl SType {
-    pub fn new(insn: u32) -> SType {
+    pub fn new(insn: u64) -> SType {
         let uimm: i32 = (((insn >> 20) & 0x7e0) | ((insn >> 7) & 0x1f)) as i32;
 
         let imm: i32 = if (insn & 0x8000_0000) != 0 {
@@ -136,7 +136,7 @@ impl SType {
             imm,
             rs2: ((insn >> 20) & 0x1f) as usize,
             rs1: ((insn >> 15) & 0x1f) as usize,
-            funct3: (insn >> 12) & 0x7,
+            funct3: ((insn as u32) >> 12) & 0x7,
         }
     }
 }
@@ -150,7 +150,7 @@ pub struct BType {
 }
 
 impl BType {
-    pub fn new(insn: u32) -> BType {
+    pub fn new(insn: u64) -> BType {
         let uimm: i32 =
             (((insn >> 20) & 0x7e0) | ((insn >> 7) & 0x1e) | ((insn & 0x80) << 4)) as i32;
 
@@ -164,7 +164,7 @@ impl BType {
             imm,
             rs2: ((insn >> 20) & 0x1f) as usize,
             rs1: ((insn >> 15) & 0x1f) as usize,
-            funct3: (insn >> 12) & 0x7,
+            funct3: ((insn as u32) >> 12) & 0x7,
         }
     }
 }
@@ -176,9 +176,9 @@ pub struct UType {
 }
 
 impl UType {
-    pub fn new(insn: u32) -> UType {
+    pub fn new(insn: u64) -> UType {
         UType {
-            imm: (insn & 0xffff_f000) as i32,
+            imm: ((insn as u32) & 0xffff_f000) as i32,
             rd: ((insn >> 7) & 0x1f) as usize,
         }
     }
@@ -191,7 +191,7 @@ pub struct JType {
 }
 
 impl JType {
-    pub fn new(insn: u32) -> JType {
+    pub fn new(insn: u64) -> JType {
         let uimm: i32 =
             ((insn & 0xff000) | ((insn & 0x100000) >> 9) | ((insn >> 20) & 0x7fe)) as i32;
 

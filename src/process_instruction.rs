@@ -7,7 +7,7 @@ use super::InstructionProcessor;
 
 fn process_opcode_op<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::RType::new(insn_bits);
 
@@ -60,7 +60,7 @@ fn process_opcode_op<T: InstructionProcessor>(
 
 fn process_opcode_op_imm<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::IType::new(insn_bits);
 
@@ -89,7 +89,7 @@ fn process_opcode_op_imm<T: InstructionProcessor>(
 
 fn process_opcode_branch<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::BType::new(insn_bits);
 
@@ -106,7 +106,7 @@ fn process_opcode_branch<T: InstructionProcessor>(
 
 fn process_opcode_load<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::IType::new(insn_bits);
 
@@ -125,7 +125,7 @@ fn process_opcode_load<T: InstructionProcessor>(
 
 fn process_opcode_store<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::SType::new(insn_bits);
 
@@ -141,7 +141,7 @@ fn process_opcode_store<T: InstructionProcessor>(
 
 fn process_opcode_system<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::ITypeCSR::new(insn_bits);
 
@@ -171,7 +171,7 @@ fn process_opcode_system<T: InstructionProcessor>(
 
 fn process_opcode_op_imm_32<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::IType::new(insn_bits);
 
@@ -193,7 +193,7 @@ fn process_opcode_op_imm_32<T: InstructionProcessor>(
 
 fn process_opcode_op_32<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
     let dec_insn = instruction_formats::RType::new(insn_bits);
 
@@ -228,11 +228,11 @@ fn process_opcode_op_32<T: InstructionProcessor>(
 /// Returns `None` if instruction doesn't decode into a valid instruction.
 pub fn process_instruction<T: InstructionProcessor>(
     processor: &mut T,
-    insn_bits: u32,
+    insn_bits: u64,
 ) -> Option<T::InstructionResult> {
-    let opcode: u32 = insn_bits & 0x7f;
+    let opcode: u64 = insn_bits & 0x7f;
 
-    match opcode {
+    match opcode as u32 {
         instruction_formats::OPCODE_OP => process_opcode_op(processor, insn_bits),
         instruction_formats::OPCODE_OP_IMM => process_opcode_op_imm(processor, insn_bits),
         instruction_formats::OPCODE_LUI => {
