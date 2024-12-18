@@ -25,47 +25,42 @@ pub const OPCODE_OP_32: u32 = 0x3b;
 #[derive(Debug, PartialEq)]
 pub struct RType {
     pub funct7: u32,
-    pub rs2: usize,
-    pub rs1: usize,
+    pub rs2: u64,
+    pub rs1: u64,
     pub funct3: u32,
-    pub rd: usize,
+    pub rd: u64,
 }
 
 impl RType {
     pub fn new(insn: u32) -> RType {
         RType {
             funct7: (insn >> 25) & 0x7f,
-            rs2: ((insn >> 20) & 0x1f) as usize,
-            rs1: ((insn >> 15) & 0x1f) as usize,
+            rs2: ((insn >> 20) & 0x1f) as u64,
+            rs1: ((insn >> 15) & 0x1f) as u64,
             funct3: (insn >> 12) & 0x7,
-            rd: ((insn >> 7) & 0x1f) as usize,
+            rd: ((insn >> 7) & 0x1f) as u64,
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct IType {
-    pub imm: i32,
-    pub rs1: usize,
+    pub imm: i64,
+    pub rs1: u64,
     pub funct3: u32,
-    pub rd: usize,
+    pub rd: u64,
 }
 
 impl IType {
     pub fn new(insn: u32) -> IType {
-        let uimm: i32 = ((insn >> 20) & 0x7ff) as i32;
-
-        let imm: i32 = if (insn & 0x8000_0000) != 0 {
-            uimm - (1 << 11)
-        } else {
-            uimm
-        };
-
         IType {
-            imm,
-            rs1: ((insn >> 15) & 0x1f) as usize,
+            imm: (match insn & 0x80000000 {
+                0x80000000 => 0xfffff800,
+                _ => 0,
+            } | ((insn >> 20) & 0x000007ff)) as i32 as i64,
+            rs1: ((insn >> 15) & 0x1f) as u64,
             funct3: (insn >> 12) & 0x7,
-            rd: ((insn >> 7) & 0x1f) as usize,
+            rd: ((insn >> 7) & 0x1f) as u64,
         }
     }
 }
@@ -73,16 +68,16 @@ impl IType {
 #[derive(Debug, PartialEq)]
 pub struct ITypeShamt {
     pub funct7: u32,
-    pub shamt: u32,
-    pub rs1: usize,
+    pub shamt: u64,
+    pub rs1: u64,
     pub funct3: u32,
-    pub rd: usize,
+    pub rd: u64,
 }
 
 impl ITypeShamt {
     pub fn new(insn: u32) -> ITypeShamt {
         let itype = IType::new(insn);
-        let shamt = (itype.imm as u32) & 0x1f;
+        let shamt = (itype.imm & 0x3f) as u64;
 
         ITypeShamt {
             funct7: (insn >> 25) & 0x7f,
@@ -94,48 +89,70 @@ impl ITypeShamt {
     }
 }
 
-pub struct ITypeCSR {
-    pub csr: u32,
-    pub rs1: usize,
+#[derive(Debug, PartialEq)]
+pub struct ITypeShamtW {
+    pub funct7: u32,
+    pub shamt: u64,
+    pub rs1: u64,
     pub funct3: u32,
-    pub rd: usize,
+    pub rd: u64,
+}
+
+impl ITypeShamtW {
+    pub fn new(insn: u32) -> ITypeShamtW {
+        let itype = IType::new(insn);
+        let shamt = (itype.imm & 0x1f) as u64;
+
+        ITypeShamtW {
+            funct7: (insn >> 25) & 0x7f,
+            shamt,
+            rs1: itype.rs1,
+            funct3: itype.funct3,
+            rd: itype.rd,
+        }
+    }
+}
+
+pub struct ITypeCSR {
+    pub csr: u64,
+    pub rs1: u64,
+    pub funct3: u32,
+    pub rd: u64,
 }
 
 impl ITypeCSR {
     pub fn new(insn: u32) -> ITypeCSR {
-        let csr: u32 = (insn >> 20) & 0xfff;
-
         ITypeCSR {
-            csr,
-            rs1: ((insn >> 15) & 0x1f) as usize,
+            csr: ((insn >> 20) & 0xfff) as u64,
+            rs1: ((insn >> 15) & 0x1f) as u64,
             funct3: (insn >> 12) & 0x7,
-            rd: ((insn >> 7) & 0x1f) as usize,
+            rd: ((insn >> 7) & 0x1f) as u64,
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct SType {
-    pub imm: i32,
-    pub rs2: usize,
-    pub rs1: usize,
+    pub imm: i64,
+    pub rs2: u64,
+    pub rs1: u64,
     pub funct3: u32,
 }
 
 impl SType {
     pub fn new(insn: u32) -> SType {
-        let uimm: i32 = (((insn >> 20) & 0x7e0) | ((insn >> 7) & 0x1f)) as i32;
-
-        let imm: i32 = if (insn & 0x8000_0000) != 0 {
-            uimm - (1 << 11)
-        } else {
-            uimm
-        };
-
         SType {
-            imm,
-            rs2: ((insn >> 20) & 0x1f) as usize,
-            rs1: ((insn >> 15) & 0x1f) as usize,
+            imm: (
+                match insn & 0x80000000 {
+                    0x80000000 => 0xfffff000,
+                    _ => 0
+                } | // imm[31:12] = [31]
+                ((insn >> 20) & 0xfe0) | // imm[11:5] = [31:25]
+                ((insn >> 7) & 0x1f)
+                // imm[4:0] = [11:7]
+            ) as i32 as i64,
+            rs2: ((insn >> 20) & 0x1f) as u64,
+            rs1: ((insn >> 15) & 0x1f) as u64,
             funct3: (insn >> 12) & 0x7,
         }
     }
@@ -143,27 +160,27 @@ impl SType {
 
 #[derive(Debug, PartialEq)]
 pub struct BType {
-    pub imm: i32,
-    pub rs2: usize,
-    pub rs1: usize,
+    pub imm: i64,
+    pub rs2: u64,
+    pub rs1: u64,
     pub funct3: u32,
 }
 
 impl BType {
     pub fn new(insn: u32) -> BType {
-        let uimm: i32 =
-            (((insn >> 20) & 0x7e0) | ((insn >> 7) & 0x1e) | ((insn & 0x80) << 4)) as i32;
-
-        let imm: i32 = if (insn & 0x8000_0000) != 0 {
-            uimm - (1 << 12)
-        } else {
-            uimm
-        };
-
         BType {
-            imm,
-            rs2: ((insn >> 20) & 0x1f) as usize,
-            rs1: ((insn >> 15) & 0x1f) as usize,
+            rs1: ((insn >> 15) & 0x1f) as u64,
+            rs2: ((insn >> 20) & 0x1f) as u64,
+            imm: (
+                match insn & 0x80000000 { // imm[31:12] = [31]
+                    0x80000000 => 0xfffff000,
+                    _ => 0
+                } |
+                ((insn << 4) & 0x00000800) | // imm[11] = [7]
+                ((insn >> 20) & 0x000007e0) | // imm[10:5] = [30:25]
+                ((insn >> 7) & 0x0000001e)
+                // imm[4:1] = [11:8]
+            ) as i32 as i64,
             funct3: (insn >> 12) & 0x7,
         }
     }
@@ -171,39 +188,46 @@ impl BType {
 
 #[derive(Debug, PartialEq)]
 pub struct UType {
-    pub imm: i32,
-    pub rd: usize,
+    pub imm: u64,
+    pub rd: u64,
 }
 
 impl UType {
     pub fn new(insn: u32) -> UType {
         UType {
-            imm: (insn & 0xffff_f000) as i32,
-            rd: ((insn >> 7) & 0x1f) as usize,
+            rd: ((insn >> 7) & 0x1f) as u64, // [11:7]
+            imm: (
+                match insn & 0x80000000 {
+                    0x80000000 => 0xffffffff00000000,
+                    _ => 0
+                } | // imm[63:32] = [31]
+                ((insn as u64) & 0xfffff000)
+                // imm[31:12] = [31:12]
+            ),
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct JType {
-    pub imm: i32,
-    pub rd: usize,
+    pub imm: i64,
+    pub rd: u64,
 }
 
 impl JType {
     pub fn new(insn: u32) -> JType {
-        let uimm: i32 =
-            ((insn & 0xff000) | ((insn & 0x100000) >> 9) | ((insn >> 20) & 0x7fe)) as i32;
-
-        let imm: i32 = if (insn & 0x8000_0000) != 0 {
-            uimm - (1 << 20)
-        } else {
-            uimm
-        };
-
         JType {
-            imm,
-            rd: ((insn >> 7) & 0x1f) as usize,
+            rd: ((insn >> 7) & 0x1f) as u64, // [11:7]
+            imm: (
+                match insn & 0x80000000 { // imm[31:20] = [31]
+                    0x80000000 => 0xfff00000,
+                    _ => 0
+                } |
+                (insn & 0x000ff000) | // imm[19:12] = [19:12]
+                ((insn & 0x00100000) >> 9) | // imm[11] = [20]
+                ((insn & 0x7fe00000) >> 20)
+                // imm[10:1] = [30:21]
+            ) as i32 as i64,
         }
     }
 }
@@ -278,8 +302,8 @@ mod tests {
     fn test_itype_shamt() {
         // slli x12, x5, 13
         assert_eq!(
-            ITypeShamt::new(0x00d29613),
-            ITypeShamt {
+            ITypeShamtW::new(0x00d29613),
+            ITypeShamtW {
                 funct7: 0,
                 shamt: 13,
                 rs1: 5,
@@ -290,8 +314,8 @@ mod tests {
 
         // srli x30, x19, 31
         assert_eq!(
-            ITypeShamt::new(0x01f9df13),
-            ITypeShamt {
+            ITypeShamtW::new(0x01f9df13),
+            ITypeShamtW {
                 funct7: 0,
                 shamt: 31,
                 rs1: 19,
@@ -302,8 +326,8 @@ mod tests {
 
         // srai x7, x23, 0
         assert_eq!(
-            ITypeShamt::new(0x400bd393),
-            ITypeShamt {
+            ITypeShamtW::new(0x400bd393),
+            ITypeShamtW {
                 funct7: 0b0100000,
                 shamt: 0,
                 rs1: 23,
@@ -457,10 +481,11 @@ mod tests {
         assert_eq!(
             UType::new(0xfffff037),
             UType {
-                imm: (0xfffff000 as u32) as i32,
+                imm: 0xfffffffffffff000 as u64,
                 rd: 0,
             }
         );
+        assert_eq!(0xfffff000 as u32, (0xfffffffffffff000 as u64) as u32);
 
         // lui x31, 0x0
         assert_eq!(UType::new(0x00000fb7), UType { imm: 0x0, rd: 31 });

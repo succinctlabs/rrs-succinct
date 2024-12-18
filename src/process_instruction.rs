@@ -178,9 +178,9 @@ fn process_opcode_op_imm_32<T: InstructionProcessor>(
     match dec_insn.funct3 {
         // RV64I
         0b000 => Some(processor.process_addiw(dec_insn)),
-        0b001 => Some(processor.process_slliw(instruction_formats::ITypeShamt::new(insn_bits))),
+        0b001 => Some(processor.process_slliw(instruction_formats::ITypeShamtW::new(insn_bits))),
         0b101 => {
-            let dec_insn_shamt = instruction_formats::ITypeShamt::new(insn_bits);
+            let dec_insn_shamt = instruction_formats::ITypeShamtW::new(insn_bits);
             match dec_insn_shamt.funct7 {
                 0b000_0000 => Some(processor.process_srliw(dec_insn_shamt)),
                 0b010_0000 => Some(processor.process_sraiw(dec_insn_shamt)),

@@ -10,7 +10,7 @@
 pub mod instruction_formats;
 pub mod process_instruction;
 
-use crate::instruction_formats::{IType, ITypeShamt, RType};
+use crate::instruction_formats::{IType, ITypeShamtW, RType};
 use downcast_rs::{impl_downcast, Downcast};
 
 pub use process_instruction::process_instruction;
@@ -63,15 +63,15 @@ pub trait InstructionProcessor {
     fn process_addiw(&mut self, dec_insn: instruction_formats::IType) -> Self::InstructionResult;
     fn process_slliw(
         &mut self,
-        dec_insn: instruction_formats::ITypeShamt,
+        dec_insn: instruction_formats::ITypeShamtW,
     ) -> Self::InstructionResult;
     fn process_srliw(
         &mut self,
-        dec_insn: instruction_formats::ITypeShamt,
+        dec_insn: instruction_formats::ITypeShamtW,
     ) -> Self::InstructionResult;
     fn process_sraiw(
         &mut self,
-        dec_insn: instruction_formats::ITypeShamt,
+        dec_insn: instruction_formats::ITypeShamtW,
     ) -> Self::InstructionResult;
 
     fn process_lui(&mut self, dec_insn: instruction_formats::UType) -> Self::InstructionResult;
