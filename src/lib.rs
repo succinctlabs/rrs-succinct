@@ -10,9 +10,6 @@
 pub mod instruction_formats;
 pub mod process_instruction;
 
-use crate::instruction_formats::{IType, ITypeShamtW, RType};
-use downcast_rs::{impl_downcast, Downcast};
-
 pub use process_instruction::process_instruction;
 
 /// A trait for objects which do something with RISC-V instructions (e.g. execute them or print a
