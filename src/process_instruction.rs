@@ -173,7 +173,6 @@ fn process_opcode_custom<T: InstructionProcessor>(
         funct3: (insn_bits[0] >> 14) & 0x7,
         rd: insn_bits[1] as usize };
     match dec_insn.funct3 {
-    0b000 => Some(processor.process_adjsp(dec_insn)),
     0b001 => Some(processor.process_stackaddr(dec_insn)),
     _ => None,
     }
@@ -396,7 +395,12 @@ pub fn process_instruction_128<T: InstructionProcessor>(
             Some(processor.process_jal128(instruction_formats::JType::new_128(insn_bits)))
         }
         instruction_formats::OPCODE_JALR => {
-            Some(processor.process_jalr128(instruction_formats::IType::new_128(insn_bits)))
+            let dec_insn = instruction_formats::JALFPType::new_128(insn_bits);
+            match dec_insn.funct3 {
+                0b001 => Some(processor.process_jalrr128(dec_insn)),
+                0b010 => Some(processor.process_jalri128(dec_insn)),
+                _ => None
+            }
         }
         instruction_formats::OPCODE_SYSTEM => process_opcode_system_128(processor, insn_bits),
         instruction_formats::OPCODE_CUSTOM0 => process_opcode_custom(processor, insn_bits),

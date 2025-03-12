@@ -92,6 +92,39 @@ impl IType {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct JALFPType {
+    // This is the offset containing old_fp or fp_adj_amount
+    pub imm: i32,
+    pub old_fp: i32,
+    pub rs1: usize,
+    pub funct3: u32,
+    pub rd: usize,
+}
+
+impl JALFPType {
+    // op{127-96} = imm
+    // op{95-72} = old_fp
+    // op{71-52} = rs1
+    // op{51-32} = rd
+    // op{16-14} = funct3
+    // op{13-7} = opcode
+    // op{6-0} = OPC_128
+    pub fn new_128(insn: &[u32]) -> JALFPType {
+        let old_fp : i32 = (insn[2] as i32)  >> 8;
+        let rs1_hi8 : i32 = ((insn[2] as i32) << 24) >> 12;
+        let rs1_lo12 : i32 = ((insn[1] as i32) >> 20) & 0x00000fff;
+        let rd : i32 = ((insn[1] as i32)<< 12) >> 12;
+        JALFPType {
+            imm: insn[3] as i32,
+            old_fp,
+            rs1: (rs1_hi8 | rs1_lo12) as usize,
+            funct3: (insn[0] >> 14) & 0x7,
+            rd: rd as usize,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ITypeShamt {
     pub funct7: u32,
     pub shamt: u32,

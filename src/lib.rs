@@ -36,7 +36,6 @@ pub trait InstructionProcessor {
     fn process_and128(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
 
     fn process_addi128(&mut self, dec_insn: instruction_formats::IType) -> Self::InstructionResult;
-    fn process_adjsp(&mut self, dec_insn: instruction_formats::IType) -> Self::InstructionResult;
     fn process_stackaddr(&mut self, dec_insn: instruction_formats::IType) -> Self::InstructionResult;
     fn process_slli128(
         &mut self,
@@ -78,6 +77,8 @@ pub trait InstructionProcessor {
 
     fn process_jal128(&mut self, dec_insn: instruction_formats::JType) -> Self::InstructionResult;
     fn process_jalr128(&mut self, dec_insn: instruction_formats::IType) -> Self::InstructionResult;
+    fn process_jalrr128(&mut self, dec_insn: instruction_formats::JALFPType) -> Self::InstructionResult;
+    fn process_jalri128(&mut self, dec_insn: instruction_formats::JALFPType) -> Self::InstructionResult;
 
     fn process_mul128(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
     fn process_mulh128(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
