@@ -58,6 +58,46 @@ fn process_opcode_op<T: InstructionProcessor>(
     }
 }
 
+fn process_opcode_custom0<T: InstructionProcessor>(
+    processor: &mut T,
+    insn_bits: u32,
+) -> Option<T::InstructionResult> {
+    let dec_insn = instruction_formats::RType::new(insn_bits);
+
+    match dec_insn.funct7 {
+        0b000_0000 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_bls12381_add(dec_insn)),
+            0b001 => Some(processor.process_int_bls12381_double(dec_insn)),
+            0b010 => Some(processor.process_int_bls12381_fp_add(dec_insn)),
+            0b011 => Some(processor.process_int_bls12381_fp_sub(dec_insn)),
+            0b100 => Some(processor.process_int_bls12381_fp_mul(dec_insn)),
+            0b101 => Some(processor.process_int_bls12381_fp2_add(dec_insn)),
+            0b110 => Some(processor.process_int_bls12381_fp2_sub(dec_insn)),
+            0b111 => Some(processor.process_int_bls12381_fp2_mul(dec_insn)),
+            _ => None,
+        },
+        0b000_0001 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_secp256k1_add(dec_insn)),
+            0b001 => Some(processor.process_int_secp256k1_double(dec_insn)),
+            _ => None,
+        },
+        0b000_0010 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_keccak_permute(dec_insn)),
+            _ => None,
+        },
+        0b000_0011 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_sha_extend(dec_insn)),
+            0b001 => Some(processor.process_int_sha_compress(dec_insn)),
+            _ => None,
+        },
+        0b000_0100 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_uint256_mul(dec_insn)),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 fn process_opcode_op_imm<T: InstructionProcessor>(
     processor: &mut T,
     insn_bits: u32,
@@ -234,6 +274,7 @@ pub fn process_instruction<T: InstructionProcessor>(
 
     match opcode {
         instruction_formats::OPCODE_OP => process_opcode_op(processor, insn_bits),
+        instruction_formats::OPCODE_CUSTOM0 => process_opcode_custom0(processor, insn_bits),
         instruction_formats::OPCODE_OP_IMM => process_opcode_op_imm(processor, insn_bits),
         instruction_formats::OPCODE_LUI => {
             Some(processor.process_lui(instruction_formats::UType::new(insn_bits)))

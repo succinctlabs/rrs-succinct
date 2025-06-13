@@ -140,4 +140,19 @@ pub trait InstructionProcessor {
     fn process_ebreak(&mut self) -> Self::InstructionResult;
     fn process_wfi(&mut self) -> Self::InstructionResult;
     fn process_mret(&mut self) -> Self::InstructionResult;
+
+    fn process_int_bls12381_add(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_double(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp_add(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp_sub(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp_mul(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp2_add(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp2_sub(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_bls12381_fp2_mul(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_secp256k1_add(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_secp256k1_double(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_keccak_permute(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_sha_extend(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_sha_compress(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_uint256_mul(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
 }
