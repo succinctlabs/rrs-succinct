@@ -155,4 +155,5 @@ pub trait InstructionProcessor {
     fn process_int_sha_extend(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
     fn process_int_sha_compress(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
     fn process_int_uint256_mul(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_memcpy(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
 }

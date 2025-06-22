@@ -94,6 +94,10 @@ fn process_opcode_custom0<T: InstructionProcessor>(
             0b000 => Some(processor.process_int_uint256_mul(dec_insn)),
             _ => None,
         },
+        0b111_1111 => match dec_insn.funct3 {
+            0b000 => Some(processor.process_int_memcpy(dec_insn)),
+            _ => None,
+        },
         _ => None,
     }
 }
