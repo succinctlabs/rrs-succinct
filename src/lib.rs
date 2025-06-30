@@ -140,4 +140,8 @@ pub trait InstructionProcessor {
     fn process_ebreak(&mut self) -> Self::InstructionResult;
     fn process_wfi(&mut self) -> Self::InstructionResult;
     fn process_mret(&mut self) -> Self::InstructionResult;
+
+    fn process_int_felt_add(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_felt_sub(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
+    fn process_int_felt_mul(&mut self, dec_insn: instruction_formats::RType) -> Self::InstructionResult;
 }
